@@ -111,6 +111,8 @@
           <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
             <label class="form-label" style="margin:0">Expiry (minutes)</label>
             <input id="caExpiry" class="form-input" type="number" min="1" value="10" style="width:120px" />
+            <label class="form-label" style="margin:0">Base URL (optional)</label>
+            <input id="caBase" class="form-input" type="text" placeholder="https://username.github.io/repo-name/" style="width:360px" />
             <button class="btn btn-primary" onclick="generateCustomerAccess()">Generate Access QR</button>
             <button class="btn btn-ghost" onclick="renderCustomerAccess()">Refresh List</button>
           </div>

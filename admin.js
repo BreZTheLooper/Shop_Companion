@@ -11,17 +11,33 @@ document.addEventListener('DOMContentLoaded', () => {
   renderInventory();
   renderCustomers();
   renderCustomerAccess();
+  initCustomerAccessUI();
   renderOrders();
 });
+
+// Initialize Customer Access UI (restore saved base URL and wire input)
+function initCustomerAccessUI() {
+  try {
+    const el = document.getElementById('caBase');
+    if (!el) return;
+    const saved = localStorage.getItem('sc_ca_base') || '';
+    el.value = saved;
+    el.addEventListener('change', () => {
+      const v = el.value.trim();
+      if (v) localStorage.setItem('sc_ca_base', v);
+      else localStorage.removeItem('sc_ca_base');
+      toast('Saved base URL', 'info');
+    });
+  } catch (e) { /* ignore */ }
+}
 
 /* ============================================================
    CUSTOMER ACCESS (Admin)
    Provides UI to generate short-lived QR tokens for customer access
    ============================================================ */
 function renderCustomerAccess() {
-  const out = document.getElementById('caOutput');
+  // Update only the token list (do not clear the QR output)
   const listEl = document.getElementById('caList');
-  if (out) out.innerHTML = '';
   const tokens = getCustomerAccessTokens();
   if (!tokens.length) {
     listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🔐</div><p>No active access tokens</p></div>`;
@@ -42,8 +58,11 @@ function generateCustomerAccess() {
   const minutes = parseInt(document.getElementById('caExpiry')?.value || '10', 10);
   const item = createCustomerAccessToken(minutes);
   // Build URL with access token in hash so scanner opens it properly
-  // Use href base so it works from file:// as well as http(s)
-  const base = window.location.href.split('#')[0];
+  // Allow an optional saved public base URL (useful when deploying to GitHub Pages)
+  const inputBase = (document.getElementById('caBase')?.value || '').trim();
+  const savedBase = localStorage.getItem('sc_ca_base') || '';
+  const chosenBase = (inputBase || savedBase).trim();
+  const base = chosenBase || window.location.href.split('#')[0];
   const url = `${base}#customer?access=${item.token}`;
   const out = document.getElementById('caOutput');
   out.innerHTML = '';
@@ -53,29 +72,7 @@ function generateCustomerAccess() {
   container.style.alignItems = 'center';
   const qr = document.createElement('div');
   generateQR(qr, url, 220);
-  // Convert canvas (if produced) to an <img> for more reliable scanning on some devices
-  // and to make it easier for users to long-press / save the QR image.
-  setTimeout(() => {
-    try {
-      // qrcode.js may produce a <canvas> or an <img> inside the container
-      const canvas = qr.querySelector('canvas');
-      const existingImg = qr.querySelector('img');
-      if (canvas) {
-        const img = document.createElement('img');
-        img.src = canvas.toDataURL('image/png');
-        img.alt = 'Customer access QR code';
-        img.className = 'ca-qr-img';
-        // replace contents with the image for consistent scanning
-        qr.innerHTML = '';
-        qr.appendChild(img);
-      } else if (existingImg) {
-        existingImg.classList.add('ca-qr-img');
-      }
-    } catch (e) {
-      // ignore conversion errors; QR should still be visible
-      console.warn('QR image conversion failed', e);
-    }
-  }, 50);
+  // Append container first so the QR library renders into a visible node
   const info = document.createElement('div');
   info.innerHTML = `<div><strong>URL (one-time)</strong></div><div style="font-family:monospace;margin-top:8px">${url}</div>`;
   const copyBtn = document.createElement('button');
@@ -90,6 +87,44 @@ function generateCustomerAccess() {
   container.appendChild(qr);
   container.appendChild(info);
   out.appendChild(container);
+
+  // Convert any produced <canvas> to an <img> for more reliable scanning and allow saving.
+  // Retry a few times because some browsers/libraries render asynchronously.
+  let attempts = 0;
+  const tryConvert = () => {
+    attempts++;
+    try {
+      const canvas = qr.querySelector('canvas');
+      const existingImg = qr.querySelector('img');
+      if (canvas) {
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png');
+        img.alt = 'Customer access QR code';
+        img.className = 'ca-qr-img';
+        const a = document.createElement('a');
+        a.href = url; a.target = '_blank';
+        a.appendChild(img);
+        qr.innerHTML = '';
+        qr.appendChild(a);
+        return;
+      }
+      if (existingImg) {
+        existingImg.classList.add('ca-qr-img');
+        if (!existingImg.parentElement || existingImg.parentElement.tagName.toLowerCase() !== 'a') {
+          const a = document.createElement('a');
+          a.href = url; a.target = '_blank';
+          existingImg.replaceWith(a);
+          a.appendChild(existingImg);
+        }
+        return;
+      }
+    } catch (e) {
+      console.warn('QR conversion attempt failed', e);
+    }
+    if (attempts < 10) setTimeout(tryConvert, 100);
+  };
+  setTimeout(tryConvert, 80);
+  // Refresh token list (does not clear the QR output)
   renderCustomerAccess();
 }
 
