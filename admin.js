@@ -63,7 +63,7 @@ function generateCustomerAccess() {
   const savedBase = localStorage.getItem('sc_ca_base') || '';
   const chosenBase = (inputBase || savedBase).trim();
   const base = chosenBase || window.location.href.split('#')[0];
-  const url = `${base}#customer?access=${item.token}`;
+  const url = `${base}#customer?access=${item.token}&exp=${item.expires}`;
   const out = document.getElementById('caOutput');
   out.innerHTML = '';
   const container = document.createElement('div');
@@ -71,7 +71,9 @@ function generateCustomerAccess() {
   container.style.gap = '12px';
   container.style.alignItems = 'center';
   const qr = document.createElement('div');
-  generateQR(qr, url, 220);
+  // Use high-contrast QR for scanning reliability
+  if (typeof generatePlainQR === 'function') generatePlainQR(qr, url, 220);
+  else generateQR(qr, url, 220);
   // Append container first so the QR library renders into a visible node
   const info = document.createElement('div');
   info.innerHTML = `<div><strong>URL (one-time)</strong></div><div style="font-family:monospace;margin-top:8px">${url}</div>`;

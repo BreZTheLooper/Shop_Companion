@@ -185,6 +185,18 @@ function generateQR(container, data, size = 200) {
   });
 }
 
+// Generate a high-contrast black-on-white QR suitable for scanning by phones
+function generatePlainQR(container, data, size = 200) {
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: typeof data === 'string' ? data : JSON.stringify(data),
+    width: size, height: size,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
 /* ============================================================
    CAMERA / BARCODE SCANNING — Uses ZXing library via CDN
    ============================================================ */
@@ -345,14 +357,27 @@ function initCustomerAccessFromURL() {
     const params = new URLSearchParams(qs);
     const token = params.get('access') || params.get('token');
     if (!token) return;
-    // validate and consume
+    // If the URL includes an explicit expiry, accept based on time only
+    const exp = params.get('exp');
+    if (exp) {
+      const expTs = parseInt(exp, 10);
+      if (!isNaN(expTs) && Date.now() <= expTs) {
+        sessionStorage.setItem('sc_customer_allowed', '1');
+        if (typeof navigateTo === 'function') navigateTo('customer');
+        toast('Customer access granted — welcome!', 'success');
+        history.replaceState(null, '', window.location.pathname + '#customer');
+        return;
+      } else {
+        toast('Access link expired.', 'error');
+        return;
+      }
+    }
+    // Fallback: try local-store validation (admin-generated tokens stored locally)
     const ok = validateAndConsumeCustomerAccessToken(token);
     if (ok) {
       sessionStorage.setItem('sc_customer_allowed', '1');
-      // navigate to customer view (if navigateTo exists)
       if (typeof navigateTo === 'function') navigateTo('customer');
       toast('Customer access granted — welcome!', 'success');
-      // Clean token param from URL to avoid reuse when sharing
       history.replaceState(null, '', window.location.pathname + '#customer');
     } else {
       toast('Invalid or expired access token.', 'error');
