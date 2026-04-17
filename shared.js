@@ -422,19 +422,32 @@ function validateAndConsumeCustomerAccessToken(token) {
 }
 
 function initCustomerAccessFromURL() {
-  // Support URL like: /index.html#customer?access=TOKEN
+  // Support URL like: /index.html?access=TOKEN#customer or fallback to the
+  // legacy format /index.html#customer?access=TOKEN
   try {
-    const hash = window.location.hash || '';
-    if (!hash) return;
-    // remove leading '#'
-    const raw = hash.slice(1);
-    const [path, qs] = raw.split('?');
-    if (!qs) return;
-    const params = new URLSearchParams(qs);
-    const token = params.get('access') || params.get('token');
+    // Prefer the query string (more reliable across QR scanners/browsers)
+    const search = window.location.search || '';
+    const paramsSearch = new URLSearchParams(search);
+    let token = paramsSearch.get('access') || paramsSearch.get('token');
+    let exp = paramsSearch.get('exp');
+
+    // Fallback to parsing the hash (legacy links)
+    if (!token) {
+      const hash = window.location.hash || '';
+      if (hash) {
+        const raw = hash.slice(1);
+        const [, qs] = raw.split('?');
+        if (qs) {
+          const params = new URLSearchParams(qs);
+          token = params.get('access') || params.get('token');
+          exp = exp || params.get('exp');
+        }
+      }
+    }
+
     if (!token) return;
+
     // If the URL includes an explicit expiry, accept based on time only
-    const exp = params.get('exp');
     if (exp) {
       const expTs = parseInt(exp, 10);
       if (!isNaN(expTs) && Date.now() <= expTs) {
@@ -448,6 +461,7 @@ function initCustomerAccessFromURL() {
         return;
       }
     }
+
     // Fallback: try local-store validation (admin-generated tokens stored locally)
     const ok = validateAndConsumeCustomerAccessToken(token);
     if (ok) {

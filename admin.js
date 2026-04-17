@@ -45,7 +45,9 @@ function generateCustomerAccess() {
   // Build URL with access token in hash so scanner opens it properly
   // Build URL with access token in hash so scanner opens it properly
   const base = window.location.href.split('#')[0];
-  const url = `${base}#customer?access=${item.token}&exp=${item.expires}`;
+  // Put token in the query string and anchor to #customer. This is more robust
+  // across scanners/browsers than embedding query inside the hash.
+  const url = `${base}?access=${item.token}&exp=${item.expires}#customer`;
   const out = document.getElementById('caOutput');
   out.innerHTML = '';
   const container = document.createElement('div');
