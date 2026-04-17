@@ -53,6 +53,29 @@ function generateCustomerAccess() {
   container.style.alignItems = 'center';
   const qr = document.createElement('div');
   generateQR(qr, url, 220);
+  // Convert canvas (if produced) to an <img> for more reliable scanning on some devices
+  // and to make it easier for users to long-press / save the QR image.
+  setTimeout(() => {
+    try {
+      // qrcode.js may produce a <canvas> or an <img> inside the container
+      const canvas = qr.querySelector('canvas');
+      const existingImg = qr.querySelector('img');
+      if (canvas) {
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png');
+        img.alt = 'Customer access QR code';
+        img.className = 'ca-qr-img';
+        // replace contents with the image for consistent scanning
+        qr.innerHTML = '';
+        qr.appendChild(img);
+      } else if (existingImg) {
+        existingImg.classList.add('ca-qr-img');
+      }
+    } catch (e) {
+      // ignore conversion errors; QR should still be visible
+      console.warn('QR image conversion failed', e);
+    }
+  }, 50);
   const info = document.createElement('div');
   info.innerHTML = `<div><strong>URL (one-time)</strong></div><div style="font-family:monospace;margin-top:8px">${url}</div>`;
   const copyBtn = document.createElement('button');

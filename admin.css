@@ -134,6 +134,11 @@
 /* --- Tab Panels --- */
 .tab-panel { animation: fadeIn 0.25s ease; }
 
+/* Customer Access QR output */
+#caOutput { display:flex; align-items:center; gap:12px; }
+#caOutput .ca-qr-img { width:220px; height:220px; object-fit:contain; border-radius:12px; border:4px solid var(--blue); display:block; }
+#caOutput .ca-qr-img:hover { box-shadow: var(--shadow-blue); }
+
 /* --- Stats Grid --- */
 .stats-grid {
   display: grid;
