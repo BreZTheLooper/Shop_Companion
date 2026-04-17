@@ -171,30 +171,6 @@ function openModal(id)  { document.getElementById(id)?.classList.remove('hidden'
 function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
 
 /* ============================================================
-   TERMS & CONDITIONS — Customer acceptance helpers
-   ============================================================ */
-function hasAcceptedTerms() {
-  return localStorage.getItem('sc_tc_accepted') === '1';
-}
-
-function acceptTerms() {
-  try {
-    localStorage.setItem('sc_tc_accepted', '1');
-  } catch (e) {}
-  closeModal('modal-terms');
-  if (typeof toast === 'function') toast('Terms accepted. You may now use the Customer panel.', 'success');
-  // Proceed to customer view if possible
-  if (typeof navigateTo === 'function') navigateTo('customer');
-}
-
-function declineTerms() {
-  closeModal('modal-terms');
-  if (typeof toast === 'function') toast('You must accept the Terms to use the Customer panel.', 'warning');
-  // Optionally navigate to admin or keep user on current view
-  if (typeof navigateTo === 'function') navigateTo('admin');
-}
-
-/* ============================================================
    QR CODE — Generate using qrcode.js (CDN)
    ============================================================ */
 function generateQR(container, data, size = 200) {
@@ -335,41 +311,10 @@ function hideSplash(el) {
   if (!el) return;
   el.classList.add('splash-hidden');
   // remove from DOM after transition to keep things clean
-  setTimeout(() => { try { el.remove(); } catch (e) {};
-    // Notify listeners that the splash has finished hiding
-    try { window.dispatchEvent(new Event('splashHidden')); } catch (e) {}
-  }, 600);
+  setTimeout(() => { try { el.remove(); } catch (e) {} }, 600);
 }
 
 window.addEventListener('DOMContentLoaded', () => initSplash(6000));
-
-// After the splash finishes hiding, if the user is on the customer entry (not admin)
-// and hasn't accepted the Terms, show the Terms modal so they can accept before using the portal.
-window.addEventListener('splashHidden', () => {
-  try {
-    const onAdminHash = location.hash === '#admin';
-    const accepted = localStorage.getItem('sc_tc_accepted') === '1';
-    if (!onAdminHash && !accepted) {
-      if (typeof openModal === 'function') openModal('modal-terms');
-      else document.getElementById('modal-terms')?.classList.remove('hidden');
-    }
-  } catch (e) { /* ignore */ }
-});
-
-// Fallback: ensure Terms modal appears after the splash timeout in case the event
-// was missed or scripts executed in an unexpected order. This runs once per load.
-setTimeout(() => {
-  try {
-    const onAdminHash = location.hash === '#admin';
-    const accepted = localStorage.getItem('sc_tc_accepted') === '1';
-    const splash = document.getElementById('splash');
-    // Only open if splash is gone (or nearly gone) and we haven't accepted
-    if (!onAdminHash && !accepted && (!splash || splash.classList.contains('splash-hidden') || Date.now())) {
-      if (typeof openModal === 'function') openModal('modal-terms');
-      else document.getElementById('modal-terms')?.classList.remove('hidden');
-    }
-  } catch (e) { /* ignore */ }
-}, 6200);
 
 /** ============================================================
  * CUSTOMER ACCESS TOKENS
@@ -422,32 +367,19 @@ function validateAndConsumeCustomerAccessToken(token) {
 }
 
 function initCustomerAccessFromURL() {
-  // Support URL like: /index.html?access=TOKEN#customer or fallback to the
-  // legacy format /index.html#customer?access=TOKEN
+  // Support URL like: /index.html#customer?access=TOKEN
   try {
-    // Prefer the query string (more reliable across QR scanners/browsers)
-    const search = window.location.search || '';
-    const paramsSearch = new URLSearchParams(search);
-    let token = paramsSearch.get('access') || paramsSearch.get('token');
-    let exp = paramsSearch.get('exp');
-
-    // Fallback to parsing the hash (legacy links)
-    if (!token) {
-      const hash = window.location.hash || '';
-      if (hash) {
-        const raw = hash.slice(1);
-        const [, qs] = raw.split('?');
-        if (qs) {
-          const params = new URLSearchParams(qs);
-          token = params.get('access') || params.get('token');
-          exp = exp || params.get('exp');
-        }
-      }
-    }
-
+    const hash = window.location.hash || '';
+    if (!hash) return;
+    // remove leading '#'
+    const raw = hash.slice(1);
+    const [path, qs] = raw.split('?');
+    if (!qs) return;
+    const params = new URLSearchParams(qs);
+    const token = params.get('access') || params.get('token');
     if (!token) return;
-
     // If the URL includes an explicit expiry, accept based on time only
+    const exp = params.get('exp');
     if (exp) {
       const expTs = parseInt(exp, 10);
       if (!isNaN(expTs) && Date.now() <= expTs) {
@@ -461,7 +393,6 @@ function initCustomerAccessFromURL() {
         return;
       }
     }
-
     // Fallback: try local-store validation (admin-generated tokens stored locally)
     const ok = validateAndConsumeCustomerAccessToken(token);
     if (ok) {

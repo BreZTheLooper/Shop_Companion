@@ -635,36 +635,6 @@
     </div>
   </div>
 
-  <!-- Terms & Conditions Modal (Customer) -->
-  <div class="modal-overlay hidden" id="modal-terms">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span class="modal-title">Terms &amp; Conditions — Shop Companion</span>
-        <button class="modal-close" onclick="closeModal('modal-terms')">✕</button>
-      </div>
-      <div style="font-size:13px;color:var(--gray-200);line-height:1.4">
-        <p><strong>Effective Date:</strong> May 11, 2026</p>
-        <p>Welcome to Shop Companion, a web-based application designed to assist customers and administrators in managing shopping orders, inventory, and checkout processes using barcode and QR code technology. By accessing or using Shop Companion (the “Application”), you agree to be bound by these Terms and Conditions (“Terms”). If you do not agree, you must discontinue use of the Application.</p>
-        <h4>1. User Eligibility</h4>
-        <p>You must be at least 18 years old, or have parental/guardian consent, to use this Application. By using Shop Companion, you confirm that all information you provide is accurate and truthful.</p>
-        <h4>2. User Accounts & Responsibilities</h4>
-        <p><strong>Customers</strong> may create and save custom order lists, search, filter, and scan items, and generate QR codes for orders. Customers are responsible for keeping access details secure, ensuring orders are accurate, and any activity performed using their account.</p>
-        <p><strong>Admins</strong> are authorized to add, edit, and remove inventory items, register customers, scan QR codes for checkout, and generate bills. Admins must maintain accurate inventory data and handle customer information responsibly.</p>
-        <h4>3. Orders, Pricing & Checkout</h4>
-        <p>Item prices displayed are subject to change. Orders generated via QR code are non-binding until scanned and finalized by an Admin. The Admin’s scanned checkout summary is the final basis for billing.</p>
-        <h4>4. Data & Privacy</h4>
-        <p>Personal data collected is used solely for application functionality and is processed in accordance with applicable Philippine law. Data is not sold to third parties without consent. Users may request data correction or deletion where applicable.</p>
-        <h4>5. Prohibited Activities</h4>
-        <p>Do not tamper with QR codes or barcodes, attempt fraud, or upload malicious code. Violations may result in account termination.</p>
-        <p style="margin-top:12px">For full details, refer to the application's privacy and legal pages or contact the operator (keancurveyintoyuntiveros@gmail.com).</p>
-      </div>
-      <div class="modal-footer" style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-ghost" onclick="declineTerms()">Decline</button>
-        <button class="btn btn-primary" onclick="acceptTerms()">I Accept</button>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <!-- Navigation helper and shared scripts -->
@@ -691,22 +661,14 @@
       } else {
           if (view === 'customer') {
             // Only allow if session was granted via access token
-              // Require Terms acceptance before allowing the customer panel
-              if (localStorage.getItem('sc_tc_accepted') !== '1') {
-                // Open Terms modal and stop navigation; the modal's Accept will continue to the customer view
-                if (typeof openModal === 'function') openModal('modal-terms');
-                else document.getElementById('modal-terms')?.classList.remove('hidden');
-                return;
-              }
-
-              if (sessionStorage.getItem('sc_customer_allowed') === '1') {
-                document.getElementById('view-customer').classList.remove('hidden');
-                document.getElementById('view-admin').classList.add('hidden');
-                location.hash = '#customer';
-              } else {
-                if (typeof toast === 'function') toast('Customer access restricted. Please scan the access QR from the cashier.', 'warning');
-                else alert('Customer access restricted. Please scan the access QR from the cashier.');
-              }
+            if (sessionStorage.getItem('sc_customer_allowed') === '1') {
+              document.getElementById('view-customer').classList.remove('hidden');
+              document.getElementById('view-admin').classList.add('hidden');
+              location.hash = '#customer';
+            } else {
+              if (typeof toast === 'function') toast('Customer access restricted. Please scan the access QR from the cashier.', 'warning');
+              else alert('Customer access restricted. Please scan the access QR from the cashier.');
+            }
             return;
           }
           // fallback
