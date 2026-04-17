@@ -335,10 +335,26 @@ function hideSplash(el) {
   if (!el) return;
   el.classList.add('splash-hidden');
   // remove from DOM after transition to keep things clean
-  setTimeout(() => { try { el.remove(); } catch (e) {} }, 600);
+  setTimeout(() => { try { el.remove(); } catch (e) {};
+    // Notify listeners that the splash has finished hiding
+    try { window.dispatchEvent(new Event('splashHidden')); } catch (e) {}
+  }, 600);
 }
 
 window.addEventListener('DOMContentLoaded', () => initSplash(6000));
+
+// After the splash finishes hiding, if the user is on the customer entry (not admin)
+// and hasn't accepted the Terms, show the Terms modal so they can accept before using the portal.
+window.addEventListener('splashHidden', () => {
+  try {
+    const onAdminHash = location.hash === '#admin';
+    const accepted = localStorage.getItem('sc_tc_accepted') === '1';
+    if (!onAdminHash && !accepted) {
+      if (typeof openModal === 'function') openModal('modal-terms');
+      else document.getElementById('modal-terms')?.classList.remove('hidden');
+    }
+  } catch (e) { /* ignore */ }
+});
 
 /** ============================================================
  * CUSTOMER ACCESS TOKENS
