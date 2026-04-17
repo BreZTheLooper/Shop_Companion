@@ -294,6 +294,27 @@ function initTheme() {
 }
 
 window.addEventListener('DOMContentLoaded', initTheme);
+// Splash screen: show logo on load then hide after a short delay
+function initSplash(ms = 6000) {
+  try {
+    const splash = document.getElementById('splash');
+    if (!splash) return;
+    // Allow early dismiss on click
+    splash.addEventListener('click', () => hideSplash(splash));
+    // Hide after ms (default 5000)
+    setTimeout(() => hideSplash(splash), parseInt(ms, 10) || 6000);
+  } catch (e) { /* ignore */ }
+}
+
+function hideSplash(el) {
+  if (!el) el = document.getElementById('splash');
+  if (!el) return;
+  el.classList.add('splash-hidden');
+  // remove from DOM after transition to keep things clean
+  setTimeout(() => { try { el.remove(); } catch (e) {} }, 600);
+}
+
+window.addEventListener('DOMContentLoaded', () => initSplash(6000));
 
 /** ============================================================
  * CUSTOMER ACCESS TOKENS
