@@ -98,6 +98,30 @@
         </div>
       </section>
 
+      <!-- ── CUSTOMER ACCESS TAB (Admin) ── -->
+      <section class="tab-panel hidden" id="tab-customer-access">
+        <div class="page-header">
+          <div>
+            <h1>Customer Access</h1>
+            <p class="page-subtitle">Generate a short-lived QR code to allow customers to open the Customer View.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <label class="form-label" style="margin:0">Expiry (minutes)</label>
+            <input id="caExpiry" class="form-input" type="number" min="1" value="10" style="width:120px" />
+            <button class="btn btn-primary" onclick="generateCustomerAccess()">Generate Access QR</button>
+            <button class="btn btn-ghost" onclick="renderCustomerAccess()">Refresh List</button>
+          </div>
+
+          <div style="margin-top:20px">
+            <div id="caOutput"></div>
+            <div id="caList" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </section>
+
       <!-- ── INVENTORY TAB ── -->
       <section class="tab-panel hidden" id="tab-inventory">
         <div class="page-header">
@@ -449,29 +473,7 @@
       <div class="product-grid" id="productGrid"></div>
     </section>
 
-    <!-- ── CUSTOMER ACCESS TAB (Admin) ── -->
-    <section class="tab-panel hidden" id="tab-customer-access">
-      <div class="page-header">
-        <div>
-          <h1>Customer Access</h1>
-          <p class="page-subtitle">Generate a short-lived QR code to allow customers to open the Customer View.</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <label class="form-label" style="margin:0">Expiry (minutes)</label>
-          <input id="caExpiry" class="form-input" type="number" min="1" value="10" style="width:120px" />
-          <button class="btn btn-primary" onclick="generateCustomerAccess()">Generate Access QR</button>
-          <button class="btn btn-ghost" onclick="renderCustomerAccess()">Refresh List</button>
-        </div>
-
-        <div style="margin-top:20px">
-          <div id="caOutput"></div>
-          <div id="caList" style="margin-top:16px"></div>
-        </div>
-      </div>
-    </section>
+    <!-- (Customer Access tab moved to Admin view) -->
 
     <!-- ── MY LISTS TAB ── -->
     <section class="cust-panel hidden" id="cpanel-lists">
