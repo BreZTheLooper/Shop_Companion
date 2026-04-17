@@ -171,6 +171,30 @@ function openModal(id)  { document.getElementById(id)?.classList.remove('hidden'
 function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
 
 /* ============================================================
+   TERMS & CONDITIONS — Customer acceptance helpers
+   ============================================================ */
+function hasAcceptedTerms() {
+  return localStorage.getItem('sc_tc_accepted') === '1';
+}
+
+function acceptTerms() {
+  try {
+    localStorage.setItem('sc_tc_accepted', '1');
+  } catch (e) {}
+  closeModal('modal-terms');
+  if (typeof toast === 'function') toast('Terms accepted. You may now use the Customer panel.', 'success');
+  // Proceed to customer view if possible
+  if (typeof navigateTo === 'function') navigateTo('customer');
+}
+
+function declineTerms() {
+  closeModal('modal-terms');
+  if (typeof toast === 'function') toast('You must accept the Terms to use the Customer panel.', 'warning');
+  // Optionally navigate to admin or keep user on current view
+  if (typeof navigateTo === 'function') navigateTo('admin');
+}
+
+/* ============================================================
    QR CODE — Generate using qrcode.js (CDN)
    ============================================================ */
 function generateQR(container, data, size = 200) {
