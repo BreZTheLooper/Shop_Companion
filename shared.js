@@ -356,6 +356,21 @@ window.addEventListener('splashHidden', () => {
   } catch (e) { /* ignore */ }
 });
 
+// Fallback: ensure Terms modal appears after the splash timeout in case the event
+// was missed or scripts executed in an unexpected order. This runs once per load.
+setTimeout(() => {
+  try {
+    const onAdminHash = location.hash === '#admin';
+    const accepted = localStorage.getItem('sc_tc_accepted') === '1';
+    const splash = document.getElementById('splash');
+    // Only open if splash is gone (or nearly gone) and we haven't accepted
+    if (!onAdminHash && !accepted && (!splash || splash.classList.contains('splash-hidden') || Date.now())) {
+      if (typeof openModal === 'function') openModal('modal-terms');
+      else document.getElementById('modal-terms')?.classList.remove('hidden');
+    }
+  } catch (e) { /* ignore */ }
+}, 6200);
+
 /** ============================================================
  * CUSTOMER ACCESS TOKENS
  * Admin can create short-lived one-time tokens encoded in a QR.
