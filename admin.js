@@ -42,7 +42,9 @@ function generateCustomerAccess() {
   const minutes = parseInt(document.getElementById('caExpiry')?.value || '10', 10);
   const item = createCustomerAccessToken(minutes);
   // Build URL with access token in hash so scanner opens it properly
-  const url = `${location.origin}${location.pathname}#customer?access=${item.token}`;
+  // Use href base so it works from file:// as well as http(s)
+  const base = window.location.href.split('#')[0];
+  const url = `${base}#customer?access=${item.token}`;
   const out = document.getElementById('caOutput');
   out.innerHTML = '';
   const container = document.createElement('div');
@@ -53,6 +55,15 @@ function generateCustomerAccess() {
   generateQR(qr, url, 220);
   const info = document.createElement('div');
   info.innerHTML = `<div><strong>URL (one-time)</strong></div><div style="font-family:monospace;margin-top:8px">${url}</div>`;
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn btn-ghost btn-sm';
+  copyBtn.textContent = 'Copy URL';
+  copyBtn.style.marginTop = '8px';
+  copyBtn.onclick = () => {
+    try { navigator.clipboard.writeText(url); toast('URL copied to clipboard', 'success'); }
+    catch (e) { prompt('Copy this URL', url); }
+  };
+  info.appendChild(copyBtn);
   container.appendChild(qr);
   container.appendChild(info);
   out.appendChild(container);
