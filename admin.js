@@ -411,16 +411,6 @@ function stopCheckoutScanner() {
   document.getElementById('stopCheckoutScan').classList.add('hidden');
 }
 
-function processManualQR() {
-  const raw = document.getElementById('manualQRInput').value.trim();
-  if (!raw) { toast('Please paste QR data first', 'warning'); return; }
-  try {
-    const orderData = JSON.parse(raw);
-    displayCheckoutOrder(orderData);
-  } catch {
-    toast('Invalid JSON format', 'error');
-  }
-}
 
 function displayCheckoutOrder(orderData) {
   // orderData: { customerId, customerName, items:[{id,name,qty,price}], listName }
@@ -503,7 +493,7 @@ function completeCheckout(data) {
   // Reset checkout panel
   document.getElementById('checkoutOrderContent').innerHTML = `
     <div class="empty-state"><div class="empty-icon">✅</div><p>Order completed! Scan next customer.</p></div>`;
-  document.getElementById('manualQRInput').value = '';
+  // manual QR input removed; no textarea to clear
 
   // Refresh tabs
   renderInventory();
