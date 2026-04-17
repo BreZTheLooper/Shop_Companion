@@ -302,3 +302,52 @@
   .shop-toolbar { flex-direction: column; align-items: stretch; }
   .cart-summary-card { position: static; }
 }
+
+/* Mobile / small-screen improvements for customer UX */
+@media (max-width: 480px) {
+  /* Header: compact layout, stack controls */
+  .cust-header-inner { padding: 12px 16px; gap: 8px; }
+  .cust-logo-title { font-size: 0.95rem; }
+  .cust-logo-sub { font-size: 10px; }
+  .cust-user { font-size: 13px; gap: 8px; }
+
+  /* Make header buttons larger and easier to tap */
+  #themeToggleCust, .cust-header .btn-ghost, .cust-header .btn {
+    padding: 10px 12px; font-size: 14px; min-height: 40px;
+  }
+
+  /* Tabs: make them easier to tap and horizontally scrollable */
+  .cust-tabs { gap: 6px; padding: 6px 12px; }
+  .cust-tab { padding: 12px 14px; font-size: 15px; }
+
+  /* Product grid: use slightly larger cards and single column where necessary */
+  .product-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .product-card { padding: 16px; border-radius: 14px; }
+  .product-emoji { font-size: 2.4rem; }
+  .product-name { font-size: 14px; }
+
+  /* Buttons: primary actions full width for easy tapping */
+  .add-cart-btn, .btn-primary, .btn-success, .btn-warning { width: 100%; display: inline-flex; justify-content: center; }
+
+  /* Cart layout: stack summary under items for mobile flow */
+  .cart-layout { grid-template-columns: 1fr; }
+  .cart-summary-card { position: static; margin-top: 18px; }
+
+  /* QR: center and enlarge for phone scanning; make card full-width */
+  .qr-layout { padding: 8px 0; }
+  #qrOutput img, #qrOutput canvas { width: min(260px, 72vw); height: auto; border-radius: 12px; border-width: 3px; }
+  .qr-layout .card { padding: 20px; max-width: 100%; }
+
+  /* Modals full-screen on mobile for easier interaction */
+  .modal-box {
+    width: 100%; max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; padding: 18px; overflow-y: auto;
+    align-self: flex-end;
+  }
+
+  /* Increase tap areas for list items */
+  .customer-select-item { padding: 14px 16px; }
+
+  /* Reduce some visual clutter on very small screens */
+  .lists-header { gap: 8px; }
+  .cust-main { padding: 12px; }
+}
