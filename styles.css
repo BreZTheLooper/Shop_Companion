@@ -477,3 +477,61 @@ tbody tr:hover td { background: rgba(255,255,255,0.03); }
   --shadow-lg:  0 8px 24px rgba(10,10,15,0.06);
   --shadow-blue: 0 0 12px rgba(26,107,255,0.08);
 }
+
+/* QR clarity fixes — improve contrast and crispness so scanners can read codes reliably */
+.my-qr, .qr-page, .qr-card, .qr-wrapper { display: block; text-align: center; }
+
+.my-qr .qr-wrapper,
+.qr-card .qr-wrapper,
+.qr-wrapper {
+  background: #fff !important;                /* white background for max contrast */
+  padding: 12px !important;                   /* clear quiet zone around code */
+  display: inline-block;
+  border-radius: 10px !important;
+  box-shadow: none !important;                /* remove blur/light effects */
+  border: 6px solid #fff !important;         /* solid white frame / quiet zone */
+  max-width: 360px;
+  width: min(320px, 86%);
+  height: auto;
+  margin: 0 auto;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Ensure image/canvas/svg render crisply (no smoothing/blur) */
+.my-qr .qr-wrapper img,
+.my-qr .qr-wrapper canvas,
+.my-qr .qr-wrapper svg,
+.qr-wrapper img, .qr-wrapper canvas, .qr-wrapper svg {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+  background: #fff !important;
+  image-rendering: pixelated !important;
+  -ms-interpolation-mode: nearest-neighbor !important;
+  image-rendering: -webkit-optimize-contrast !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transform: none !important;
+}
+
+/* Remove overlays, badges or captions that can obstruct the QR */
+.my-qr .qr-overlay,
+.qr-overlay,
+.qr-badge,
+.qr-caption {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Surrounding area should not apply a dark/gradient overlay */
+.my-qr { background: transparent; color: var(--black); padding: 8px 0; }
+
+/* Slightly larger, still-constrained size on small screens for scanning */
+@media (max-width: 480px) {
+  .my-qr .qr-wrapper { width: min(260px, 86%); padding: 10px; border-radius: 8px; }
+  .my-qr .qr-wrapper img, .my-qr .qr-wrapper canvas { image-rendering: pixelated; }
+}
+
+/* Force square framing where possible so scanning area is consistent */
+.my-qr .qr-wrapper { aspect-ratio: 1 / 1; }

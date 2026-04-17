@@ -477,7 +477,12 @@ function renderQRCode() {
     timestamp: new Date().toISOString(),
   };
 
-  generateQR(qrEl, payload, 220);
+  // Use black-and-white QR generator for maximum scanner reliability
+  if (typeof generatePlainQR === 'function') {
+    generatePlainQR(qrEl, payload, 220);
+  } else {
+    generateQR(qrEl, payload, 220);
+  }
 
   // Cart preview
   sumEl.innerHTML = `
