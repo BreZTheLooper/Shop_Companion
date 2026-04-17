@@ -11,25 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
   renderInventory();
   renderCustomers();
   renderCustomerAccess();
-  initCustomerAccessUI();
   renderOrders();
 });
 
-// Initialize Customer Access UI (restore saved base URL and wire input)
-function initCustomerAccessUI() {
-  try {
-    const el = document.getElementById('caBase');
-    if (!el) return;
-    const saved = localStorage.getItem('sc_ca_base') || '';
-    el.value = saved;
-    el.addEventListener('change', () => {
-      const v = el.value.trim();
-      if (v) localStorage.setItem('sc_ca_base', v);
-      else localStorage.removeItem('sc_ca_base');
-      toast('Saved base URL', 'info');
-    });
-  } catch (e) { /* ignore */ }
-}
+// ...existing code...
 
 /* ============================================================
    CUSTOMER ACCESS (Admin)
@@ -58,11 +43,8 @@ function generateCustomerAccess() {
   const minutes = parseInt(document.getElementById('caExpiry')?.value || '10', 10);
   const item = createCustomerAccessToken(minutes);
   // Build URL with access token in hash so scanner opens it properly
-  // Allow an optional saved public base URL (useful when deploying to GitHub Pages)
-  const inputBase = (document.getElementById('caBase')?.value || '').trim();
-  const savedBase = localStorage.getItem('sc_ca_base') || '';
-  const chosenBase = (inputBase || savedBase).trim();
-  const base = chosenBase || window.location.href.split('#')[0];
+  // Build URL with access token in hash so scanner opens it properly
+  const base = window.location.href.split('#')[0];
   const url = `${base}#customer?access=${item.token}&exp=${item.expires}`;
   const out = document.getElementById('caOutput');
   out.innerHTML = '';

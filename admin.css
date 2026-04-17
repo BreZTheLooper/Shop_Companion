@@ -107,6 +107,15 @@
   transition: margin-left 0.25s ease;
   min-height: 100vh;
 }
+.admin-main { position: relative; }
+
+.admin-top-right {
+  position: absolute;
+  top: 12px;
+  right: 24px;
+  z-index: 250;
+}
+.admin-top-right .btn { padding: 8px 12px; }
 .admin-main.expanded { margin-left: 64px; }
 
 /* --- Page Header --- */

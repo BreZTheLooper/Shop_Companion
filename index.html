@@ -39,8 +39,6 @@
           </div>
         </div>
           <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
-          <!-- Admin theme toggle -->
-          <button id="themeToggleAdmin" class="btn btn-ghost btn-sm" title="Toggle light/dark" onclick="toggleTheme()">☀️</button>
       </div>
 
       <nav class="sidebar-nav">
@@ -64,13 +62,15 @@
         </a>
       </nav>
 
-      <a href="#" class="nav-switch-btn" onclick="navigateTo('customer')">
-        <span>🛍️</span> Customer View (QR required)
-      </a>
+      <!-- Customer View switch removed to prevent jumping from admin to customer -->
     </aside>
 
     <!-- ====== MAIN CONTENT ====== -->
     <main class="admin-main">
+      <!-- Top-right theme toggle (moved from sidebar) -->
+      <div class="admin-top-right">
+        <button id="themeToggleAdmin" class="btn btn-ghost btn-sm" title="Toggle light/dark" onclick="toggleTheme()">☀️</button>
+      </div>
 
       <!-- ── DASHBOARD TAB ── -->
       <section class="tab-panel active" id="tab-dashboard">
@@ -79,7 +79,7 @@
             <h1>Dashboard</h1>
             <p class="page-subtitle">Overview of your store</p>
           </div>
-          <div class="admin-badge"><span>👑</span> Administrator</div>
+          <!-- admin-badge removed to prevent customers from seeing/admin UI shortcut -->
         </div>
 
         <div class="stats-grid" id="statsGrid"></div>
@@ -111,8 +111,6 @@
           <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
             <label class="form-label" style="margin:0">Expiry (minutes)</label>
             <input id="caExpiry" class="form-input" type="number" min="1" value="10" style="width:120px" />
-            <label class="form-label" style="margin:0">Base URL (optional)</label>
-            <input id="caBase" class="form-input" type="text" placeholder="https://username.github.io/repo-name/" style="width:360px" />
             <button class="btn btn-primary" onclick="generateCustomerAccess()">Generate Access QR</button>
             <button class="btn btn-ghost" onclick="renderCustomerAccess()">Refresh List</button>
           </div>
@@ -425,11 +423,8 @@
         <button class="btn btn-ghost btn-sm" onclick="openModal('modal-login')">Login / Register</button>
       </div>
 
-      <!-- Customer theme toggle + link to admin -->
+      <!-- Customer theme toggle (admin link removed so customers can't jump to admin) -->
       <button id="themeToggleCust" class="btn btn-ghost btn-sm" title="Toggle light/dark" onclick="toggleTheme()">☀️</button>
-      <a href="#" class="btn btn-ghost btn-sm" onclick="navigateTo('admin')">
-        <span>👑</span> Admin View
-      </a>
     </div>
 
     <!-- Tab Bar -->
@@ -647,29 +642,43 @@
 
 <!-- Navigation helper and shared scripts -->
 <script>
-  // Show either admin or customer view
-  function navigateTo(view) {
-    if (view === 'admin') {
-      document.getElementById('view-admin').classList.remove('hidden');
-      document.getElementById('view-customer').classList.add('hidden');
-      location.hash = '#admin';
-    } else {
-        if (view === 'customer') {
-          // Only allow if session was granted via access token
-          if (sessionStorage.getItem('sc_customer_allowed') === '1') {
-            document.getElementById('view-customer').classList.remove('hidden');
-            document.getElementById('view-admin').classList.add('hidden');
-            location.hash = '#customer';
-          } else {
-            toast('Customer access restricted. Please scan the access QR from the cashier.', 'warning');
-          }
+    // Show either admin or customer view
+    function navigateTo(view) {
+      if (view === 'admin') {
+        // Prevent customers from switching to admin via the UI or by reloading while in a customer session.
+        if (sessionStorage.getItem('sc_customer_allowed') === '1') {
+          if (typeof toast === 'function') toast('Admin access is restricted for customer sessions.', 'warning');
+          else alert('Admin access is restricted for customer sessions.');
           return;
         }
-        // fallback
-        document.getElementById('view-customer').classList.remove('hidden');
-        document.getElementById('view-admin').classList.add('hidden');
+        // Allow admin view only when the page was directly opened with the '#admin' hash.
+        if (location.hash !== '#admin') {
+          if (typeof toast === 'function') toast('Admin access is restricted.', 'warning');
+          else alert('Admin access is restricted.');
+          return;
+        }
+        document.getElementById('view-admin').classList.remove('hidden');
+        document.getElementById('view-customer').classList.add('hidden');
+        location.hash = '#admin';
+        return;
+      } else {
+          if (view === 'customer') {
+            // Only allow if session was granted via access token
+            if (sessionStorage.getItem('sc_customer_allowed') === '1') {
+              document.getElementById('view-customer').classList.remove('hidden');
+              document.getElementById('view-admin').classList.add('hidden');
+              location.hash = '#customer';
+            } else {
+              if (typeof toast === 'function') toast('Customer access restricted. Please scan the access QR from the cashier.', 'warning');
+              else alert('Customer access restricted. Please scan the access QR from the cashier.');
+            }
+            return;
+          }
+          // fallback
+          document.getElementById('view-customer').classList.remove('hidden');
+          document.getElementById('view-admin').classList.add('hidden');
+      }
     }
-  }
   // On load, choose view based on hash (default: customer)
   window.addEventListener('DOMContentLoaded', () => {
     if (location.hash === '#admin') navigateTo('admin');
