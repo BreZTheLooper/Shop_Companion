@@ -10,8 +10,61 @@ document.addEventListener('DOMContentLoaded', () => {
   renderDashboard();
   renderInventory();
   renderCustomers();
+  renderCustomerAccess();
   renderOrders();
 });
+
+/* ============================================================
+   CUSTOMER ACCESS (Admin)
+   Provides UI to generate short-lived QR tokens for customer access
+   ============================================================ */
+function renderCustomerAccess() {
+  const out = document.getElementById('caOutput');
+  const listEl = document.getElementById('caList');
+  if (out) out.innerHTML = '';
+  const tokens = getCustomerAccessTokens();
+  if (!tokens.length) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🔐</div><p>No active access tokens</p></div>`;
+    return;
+  }
+  listEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">` + tokens.map(t => {
+    const created = new Date(t.created).toLocaleString();
+    const exp = new Date(t.expires).toLocaleString();
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.03)">
+      <div style="font-family:monospace">${t.token}</div>
+      <div style="font-size:12px;color:var(--gray-400)">Expires: ${exp}</div>
+      <div><button class="btn btn-danger btn-sm" onclick="revokeCustomerAccess('${t.token}')">Revoke</button></div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+function generateCustomerAccess() {
+  const minutes = parseInt(document.getElementById('caExpiry')?.value || '10', 10);
+  const item = createCustomerAccessToken(minutes);
+  // Build URL with access token in hash so scanner opens it properly
+  const url = `${location.origin}${location.pathname}#customer?access=${item.token}`;
+  const out = document.getElementById('caOutput');
+  out.innerHTML = '';
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.gap = '12px';
+  container.style.alignItems = 'center';
+  const qr = document.createElement('div');
+  generateQR(qr, url, 220);
+  const info = document.createElement('div');
+  info.innerHTML = `<div><strong>URL (one-time)</strong></div><div style="font-family:monospace;margin-top:8px">${url}</div>`;
+  container.appendChild(qr);
+  container.appendChild(info);
+  out.appendChild(container);
+  renderCustomerAccess();
+}
+
+function revokeCustomerAccess(token) {
+  if (!confirm('Revoke this access token?')) return;
+  revokeCustomerAccessToken(token);
+  renderCustomerAccess();
+  toast('Token revoked', 'warning');
+}
 
 /* ═══════════════════════════════════════════════
    SIDEBAR

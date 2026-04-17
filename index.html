@@ -22,8 +22,7 @@
 
 <!-- Single Toast Container (shared by both panels) -->
 <div id="toast-container"></div>
-<!-- Theme toggle (global, visible above content) -->
-<button id="themeToggle" class="btn btn-ghost" style="position:fixed;top:12px;right:12px;z-index:2000" onclick="toggleTheme()">☀️</button>
+<!-- Theme toggles will be placed inside each view's header to avoid overlap -->
 
 <!-- Admin View -->
 <div id="view-admin">
@@ -39,7 +38,9 @@
             <div class="logo-role">Admin Panel</div>
           </div>
         </div>
-        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+          <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+          <!-- Admin theme toggle -->
+          <button id="themeToggleAdmin" class="btn btn-ghost btn-sm" title="Toggle light/dark" onclick="toggleTheme()">☀️</button>
       </div>
 
       <nav class="sidebar-nav">
@@ -58,10 +59,13 @@
         <a href="#" class="nav-item" data-tab="orders" onclick="switchTab('orders',this)">
           <span class="nav-icon">📋</span><span class="nav-label">Orders</span>
         </a>
+        <a href="#" class="nav-item" data-tab="customer-access" onclick="switchTab('customer-access',this)">
+          <span class="nav-icon">🔐</span><span class="nav-label">Customer Access</span>
+        </a>
       </nav>
 
       <a href="#" class="nav-switch-btn" onclick="navigateTo('customer')">
-        <span>🛍️</span> Switch to Customer View
+        <span>🛍️</span> Customer View (QR required)
       </a>
     </aside>
 
@@ -395,6 +399,8 @@
         <button class="btn btn-ghost btn-sm" onclick="openModal('modal-login')">Login / Register</button>
       </div>
 
+      <!-- Customer theme toggle + link to admin -->
+      <button id="themeToggleCust" class="btn btn-ghost btn-sm" title="Toggle light/dark" onclick="toggleTheme()">☀️</button>
       <a href="#" class="btn btn-ghost btn-sm" onclick="navigateTo('admin')">
         <span>👑</span> Admin View
       </a>
@@ -441,6 +447,30 @@
 
       <!-- Product Grid -->
       <div class="product-grid" id="productGrid"></div>
+    </section>
+
+    <!-- ── CUSTOMER ACCESS TAB (Admin) ── -->
+    <section class="tab-panel hidden" id="tab-customer-access">
+      <div class="page-header">
+        <div>
+          <h1>Customer Access</h1>
+          <p class="page-subtitle">Generate a short-lived QR code to allow customers to open the Customer View.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <label class="form-label" style="margin:0">Expiry (minutes)</label>
+          <input id="caExpiry" class="form-input" type="number" min="1" value="10" style="width:120px" />
+          <button class="btn btn-primary" onclick="generateCustomerAccess()">Generate Access QR</button>
+          <button class="btn btn-ghost" onclick="renderCustomerAccess()">Refresh List</button>
+        </div>
+
+        <div style="margin-top:20px">
+          <div id="caOutput"></div>
+          <div id="caList" style="margin-top:16px"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ── MY LISTS TAB ── -->
@@ -620,9 +650,20 @@
       document.getElementById('view-customer').classList.add('hidden');
       location.hash = '#admin';
     } else {
-      document.getElementById('view-customer').classList.remove('hidden');
-      document.getElementById('view-admin').classList.add('hidden');
-      location.hash = '#customer';
+        if (view === 'customer') {
+          // Only allow if session was granted via access token
+          if (sessionStorage.getItem('sc_customer_allowed') === '1') {
+            document.getElementById('view-customer').classList.remove('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+            location.hash = '#customer';
+          } else {
+            toast('Customer access restricted. Please scan the access QR from the cashier.', 'warning');
+          }
+          return;
+        }
+        // fallback
+        document.getElementById('view-customer').classList.remove('hidden');
+        document.getElementById('view-admin').classList.add('hidden');
     }
   }
   // On load, choose view based on hash (default: customer)

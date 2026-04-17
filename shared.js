@@ -257,8 +257,12 @@ function uid() { return Math.random().toString(36).slice(2, 9).toUpperCase(); }
 function setTheme(theme) {
   try { localStorage.setItem('sc_theme', theme); } catch(e){}
   document.documentElement.classList.toggle('light-theme', theme === 'light');
-  const btn = document.getElementById('themeToggle');
-  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+  // Update any theme toggle buttons present in the DOM
+  const btnAdmin = document.getElementById('themeToggleAdmin');
+  const btnCust  = document.getElementById('themeToggleCust');
+  const icon = theme === 'light' ? '🌙' : '☀️';
+  if (btnAdmin) btnAdmin.textContent = icon;
+  if (btnCust) btnCust.textContent = icon;
 }
 
 function toggleTheme() {
@@ -278,3 +282,82 @@ function initTheme() {
 }
 
 window.addEventListener('DOMContentLoaded', initTheme);
+
+/** ============================================================
+ * CUSTOMER ACCESS TOKENS
+ * Admin can create short-lived one-time tokens encoded in a QR.
+ * The customer scanning the QR opens the URL which validates and
+ * consumes the token, allowing access for that session.
+ * Stored under key 'cust_access_tokens' in sc_ store.
+ * ============================================================ */
+function getCustomerAccessTokens() {
+  return Store.get('cust_access_tokens') || [];
+}
+
+function saveCustomerAccessTokens(list) {
+  Store.set('cust_access_tokens', list || []);
+}
+
+function createCustomerAccessToken(minutes = 10) {
+  const token = uid();
+  const now = Date.now();
+  const expires = now + Math.max(1, parseInt(minutes||10, 10)) * 60 * 1000;
+  const list = getCustomerAccessTokens();
+  const item = { token, created: now, expires, used: false };
+  list.push(item);
+  saveCustomerAccessTokens(list);
+  return item;
+}
+
+function revokeCustomerAccessToken(token) {
+  const list = getCustomerAccessTokens().filter(t => t.token !== token);
+  saveCustomerAccessTokens(list);
+}
+
+function validateAndConsumeCustomerAccessToken(token) {
+  if (!token) return false;
+  const list = getCustomerAccessTokens();
+  const idx = list.findIndex(t => t.token === token);
+  if (idx === -1) return false;
+  const entry = list[idx];
+  if (entry.used) return false;
+  if (Date.now() > entry.expires) {
+    // expired — remove it
+    list.splice(idx, 1);
+    saveCustomerAccessTokens(list);
+    return false;
+  }
+  // consume token (one-time)
+  list.splice(idx, 1);
+  saveCustomerAccessTokens(list);
+  return true;
+}
+
+function initCustomerAccessFromURL() {
+  // Support URL like: /index.html#customer?access=TOKEN
+  try {
+    const hash = window.location.hash || '';
+    if (!hash) return;
+    // remove leading '#'
+    const raw = hash.slice(1);
+    const [path, qs] = raw.split('?');
+    if (!qs) return;
+    const params = new URLSearchParams(qs);
+    const token = params.get('access') || params.get('token');
+    if (!token) return;
+    // validate and consume
+    const ok = validateAndConsumeCustomerAccessToken(token);
+    if (ok) {
+      sessionStorage.setItem('sc_customer_allowed', '1');
+      // navigate to customer view (if navigateTo exists)
+      if (typeof navigateTo === 'function') navigateTo('customer');
+      toast('Customer access granted — welcome!', 'success');
+      // Clean token param from URL to avoid reuse when sharing
+      history.replaceState(null, '', window.location.pathname + '#customer');
+    } else {
+      toast('Invalid or expired access token.', 'error');
+    }
+  } catch (e) { /* ignore */ }
+}
+
+window.addEventListener('DOMContentLoaded', initCustomerAccessFromURL);
